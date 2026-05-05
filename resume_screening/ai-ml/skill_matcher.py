@@ -11,7 +11,8 @@ def match(resume_skills, job_skills, threshold=0.8):
     Uses case-insensitive + simple fuzzy matching to handle variants.
     """
     if not job_skills:
-        return 0, [], []
+        # If no target skills, return 100% match for the resume's own profile
+        return 100, resume_skills, []
 
     norm_resume = [(_normalize(s), s) for s in resume_skills]
     norm_job = [(_normalize(s), s) for s in job_skills]

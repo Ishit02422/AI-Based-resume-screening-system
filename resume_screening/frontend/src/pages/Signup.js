@@ -62,11 +62,23 @@ function Signup() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Role</label>
-              <select className="form-input" value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="user">Candidate</option>
-                <option value="recruiter">Recruiter</option>
-              </select>
+              <label className="form-label">I am a...</label>
+              <div className="flex gap-4">
+                <button 
+                  type="button"
+                  className={`btn flex-1 ${role === 'user' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setRole('user')}
+                >
+                  Candidate
+                </button>
+                <button 
+                  type="button"
+                  className={`btn flex-1 ${role === 'recruiter' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setRole('recruiter')}
+                >
+                  Recruiter
+                </button>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary w-full">Sign Up</button>
             <p className="text-center mt-4 muted">

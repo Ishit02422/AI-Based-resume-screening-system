@@ -91,10 +91,12 @@ function Jobs() {
               </div>
 
               <div className="flex gap-4">
-                <button className="btn btn-primary flex-1" onClick={() => handleApply(job._id)}>
-                  Apply Now
-                </button>
-                {user && (user.role === 'recruiter' || user.role === 'admin') && (
+                {user?.role === 'user' && (
+                  <button className="btn btn-primary flex-1" onClick={() => handleApply(job._id)}>
+                    Apply Now
+                  </button>
+                )}
+                {(user?.role === 'recruiter' || user?.role === 'admin') && (
                   <button className="btn btn-ghost flex-1" onClick={() => navigate(`/history?jobId=${job._id}`)}>
                     View Applicants
                   </button>

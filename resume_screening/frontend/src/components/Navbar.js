@@ -21,21 +21,30 @@ function Navbar() {
               <Link to="/login" className="nav-link">Login</Link>
               <Link to="/signup" className="btn btn-primary" style={{ padding: '6px 12px' }}>Signup</Link>
             </>
-          ) : isRecruiter ? (
-            <>
-              <Link to="/dashboard" className="nav-link">Recruiter Console</Link>
-              <Link to="/create-job" className="nav-link">Post Job</Link>
-              <Link to="/jobs" className="nav-link">My Jobs</Link>
-              <Link to="/history" className="nav-link">Applicants</Link>
-              <button onClick={logout} className="btn btn-ghost" style={{ padding: '6px 12px' }}>Logout</button>
-            </>
           ) : (
             <>
-              <Link to="/dashboard" className="nav-link">Candidate Hub</Link>
-              <Link to="/upload" className="nav-link">Upload Resume</Link>
-              <Link to="/jobs" className="nav-link">Browse Jobs</Link>
-              <Link to="/history" className="nav-link">My Analysis</Link>
-              <button onClick={logout} className="btn btn-ghost" style={{ padding: '6px 12px' }}>Logout</button>
+              <div className="flex items-center gap-3 mr-4">
+                <span className={`badge ${isRecruiter ? 'bg-primary' : 'bg-success'}`} style={{ fontSize: '10px' }}>
+                  {isRecruiter ? 'RECRUITER' : 'CANDIDATE'}
+                </span>
+                <span className="muted small font-bold">{user.name || user.email}</span>
+              </div>
+              {isRecruiter ? (
+                <>
+                  <Link to="/dashboard" className="nav-link">Recruiter Console</Link>
+                  <Link to="/create-job" className="nav-link">Post Job</Link>
+                  <Link to="/jobs" className="nav-link">My Jobs</Link>
+                  <Link to="/history" className="nav-link">Applicants</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/dashboard" className="nav-link">Candidate Hub</Link>
+                  <Link to="/upload" className="nav-link">Upload Resume</Link>
+                  <Link to="/jobs" className="nav-link">Browse Jobs</Link>
+                  <Link to="/history" className="nav-link">My Analysis</Link>
+                </>
+              )}
+              <button onClick={logout} className="btn btn-ghost" style={{ padding: '6px 12px', marginLeft: '10px' }}>Logout</button>
             </>
           )}
         </nav>

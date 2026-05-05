@@ -17,19 +17,24 @@ const COOKIE_OPTIONS = {
 router.post('/register', async (req, res) => {
   try {
     console.log('Register attempt:', req.body && { email: req.body.email });
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: 'Email already registered' });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, passwordHash });
+    let userRole = role === 'recruiter' ? 'recruiter' : 'user';
+    
+    // Force recruiter for this specific user for testing
+    if (email === 'hp@gmail.com') userRole = 'recruiter';
+    
+    const user = new User({ name, email, passwordHash, role: userRole });
     await user.save();
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET);
     res.cookie('token', token, COOKIE_OPTIONS);
-    res.json({ user: { id: user._id, email: user.email, name: user.name } });
+    res.json({ user: { _id: user._id, email: user.email, name: user.name, role: (user.email === 'hp@gmail.com' ? 'recruiter' : user.role) } });
   } catch (err) {
     console.error('Register error:', err.message, err.stack);
     if (err.code === 11000) return res.status(400).json({ error: 'Email already registered' });
@@ -50,7 +55,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET);
     res.cookie('token', token, COOKIE_OPTIONS);
-    res.json({ user: { id: user._id, email: user.email, name: user.name } });
+    res.json({ user: { _id: user._id, email: user.email, name: user.name, role: (user.email === 'hp@gmail.com' ? 'recruiter' : user.role) } });
   } catch (err) {
     console.error('Login error:', err.message, err.stack);
     try {
@@ -74,9 +79,27 @@ router.get('/me', async (req, res) => {
     if (!token) return res.json({ user: null });
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id).select('-passwordHash');
+    if (user && user.email === 'hp@gmail.com') user.role = 'recruiter';
     res.json({ user });
   } catch (err) {
     res.json({ user: null });
+  }
+});
+
+// Update user role (test only)
+router.post('/update-role', async (req, res) => {
+  try {
+    const token = req.cookies && req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { role } = req.body;
+    
+    if (!['user', 'recruiter'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+    
+    await User.findByIdAndUpdate(decoded.id, { role });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update role' });
   }
 });
 

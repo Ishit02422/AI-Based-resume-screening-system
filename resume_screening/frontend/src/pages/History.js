@@ -77,7 +77,17 @@ function History() {
 
   return (
     <div className="page container">
-      <h1 className="mb-6">Resume Analysis History</h1>
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h1 className="mb-2">Applicant Tracking Dashboard</h1>
+          <p className="muted small">Manage and screen candidates across your active job postings.</p>
+        </div>
+        <div className="flex gap-4">
+          <div className="card-mini bg-success-faded">
+            <span className="small font-bold">Total Applicants: {total}</span>
+          </div>
+        </div>
+      </div>
 
       <section className="card">
         <div className="grid" style={{ gap: '16px' }}>
@@ -127,12 +137,46 @@ function History() {
                 </div>
               </div>
 
+              {/* Hiring Pipeline Visual */}
+              <div className="hiring-pipeline-container my-6">
+                <div className="pipeline-track"></div>
+                <div className="flex justify-between relative">
+                  <div className="pipeline-step active">
+                    <div className="step-dot"></div>
+                    <span className="step-label">Applied</span>
+                  </div>
+                  <div className={`pipeline-step ${r.score > 0 ? 'active' : ''}`}>
+                    <div className="step-dot"></div>
+                    <span className="step-label">AI Screened</span>
+                  </div>
+                  <div className={`pipeline-step ${['shortlisted', 'interview scheduled', 'hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
+                    <div className="step-dot"></div>
+                    <span className="step-label">Shortlisted</span>
+                  </div>
+                  <div className={`pipeline-step ${['hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
+                    <div className="step-dot"></div>
+                    <span className="step-label">Hired</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-between items-center pt-4 border-t">
                 <span className="muted small">Uploaded: {new Date(r.createdAt).toLocaleDateString()}</span>
                 <div className="flex gap-2">
-                  <span className={`badge ${r.interviewStatus === 'Shortlisted' ? 'bg-success' : 'bg-secondary'}`}>
-                    {r.interviewStatus}
-                  </span>
+                  {['recruiter', 'admin'].includes(user?.role) && r.interviewStatus === 'Not Reviewed' ? (
+                    <>
+                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => updateStatus(r._id, 'Shortlisted')}>
+                        Shortlist
+                      </button>
+                      <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--danger)' }} onClick={() => updateStatus(r._id, 'Rejected')}>
+                        Reject
+                      </button>
+                    </>
+                  ) : (
+                    <span className={`badge ${r.interviewStatus === 'Shortlisted' ? 'bg-success' : 'bg-secondary'}`}>
+                      {r.interviewStatus}
+                    </span>
+                  )}
                   <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setOpenId(openId === r._id ? null : r._id)}>
                     {openId === r._id ? 'Hide Analysis' : 'Show Analysis'}
                   </button>
@@ -142,19 +186,6 @@ function History() {
               {openId === r._id && (
                 <div className="mt-4 pt-4 border-t">
                   <Result data={r} />
-                  {['recruiter', 'admin'].includes(user?.role) && r.interviewStatus === 'Not Reviewed' && (
-                    <div className="mt-8 p-4 bg-slate-50 border rounded-lg">
-                      <p className="form-label mb-3">Recruiter Decision (Step 10):</p>
-                      <div className="flex gap-3">
-                        <button className="btn btn-primary" onClick={() => updateStatus(r._id, 'Shortlisted')}>
-                          Shortlist Candidate
-                        </button>
-                        <button className="btn btn-ghost" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => updateStatus(r._id, 'Rejected')}>
-                          Move to Reject
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>

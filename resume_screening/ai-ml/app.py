@@ -54,8 +54,8 @@ def analyze():
         # ✅ Skill extraction
         resume_skills = extract_skills(text)
 
-        # ✅ Job skills (accept job-specific list if provided in request)
-        job_skills = data.get('jobSkills') if isinstance(data, dict) and data.get('jobSkills') else ["python", "react", "sql", "mongodb"]
+        # Use job-specific list if provided, otherwise default to empty list (allows field-agnostic parsing)
+        job_skills = data.get('jobSkills') if (isinstance(data, dict) and data.get('jobSkills') is not None) else []
 
         score, matched, missing = match(resume_skills, job_skills)
 

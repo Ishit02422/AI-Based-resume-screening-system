@@ -19,7 +19,7 @@ function CreateJob() {
         e.preventDefault();
         try {
             const skillsArray = formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean);
-            await axios.post('http://localhost:5001/api/jobs', {
+            await axios.post('/api/jobs', {
                 title: formData.title,
                 description: formData.description,
                 requiredSkills: skillsArray

@@ -45,9 +45,9 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       }
     }
 
-    // Default skills if no job or job has no skills
+    // If no job is linked, we force a generic skill to bypass the old AI server's hardcoded IT defaults
     if (!jobSkills.length) {
-      jobSkills = ["python", "react", "sql", "mongodb"];
+      jobSkills = ["Professional Expertise"]; 
     }
 
     let aiResponse;
@@ -55,7 +55,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       aiResponse = await axios.post(
         "http://localhost:5000/analyze",
         { filePath: absolutePath, jobSkills: jobSkills },
-        { timeout: 20000 }
+        { timeout: 60000 }
       );
 
       if (!aiResponse || !aiResponse.data) {
@@ -64,7 +64,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       }
 
       // ensure we persist file info and new fields returned by AI
-      const payload = {
+      let payload = {
         ...aiResponse.data,
         user: req.user._id,
         fileName: req.file ? req.file.filename : undefined,
@@ -74,6 +74,15 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
         jobId: jobId || undefined, // Link to job
         status: 'Screened'
       };
+
+      // ✅ UNIVERSAL MODE HACK: If no job is linked and AI found skills but gave 0 score, 
+      // we treat it as a profile extraction (100% match for its own field)
+      if (!jobId && payload.score === 0 && payload.skills && payload.skills.length > 0) {
+        payload.score = 100;
+        payload.matchedSkills = payload.skills;
+        payload.missingSkills = [];
+        payload.jobSkills = payload.skills;
+      }
 
       const resume = new Resume(payload);
 
@@ -159,7 +168,8 @@ router.get('/my', auth, async (req, res) => {
       .sort({ score: -1, createdAt: -1 })
       .skip((pageNum - 1) * perPage)
       .limit(perPage)
-      .populate('jobId', 'title');
+      .populate('jobId', 'title')
+      .populate('user', 'name email');
 
     res.json({ data: resumes, total, page: pageNum, pages: Math.ceil(total / perPage) });
   } catch (err) {
