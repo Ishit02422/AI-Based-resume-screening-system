@@ -40,7 +40,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // List all jobs
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const jobs = await Job.find().sort({ createdAt: -1 });
         res.json({ data: jobs });

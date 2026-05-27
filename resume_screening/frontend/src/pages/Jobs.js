@@ -96,6 +96,11 @@ function Jobs() {
                     Apply Now
                   </button>
                 )}
+                {!user && (
+                  <button className="btn btn-primary flex-1" onClick={() => navigate('/login')}>
+                    Login to Apply
+                  </button>
+                )}
                 {(user?.role === 'recruiter' || user?.role === 'admin') && (
                   <button className="btn btn-ghost flex-1" onClick={() => navigate(`/history?jobId=${job._id}`)}>
                     View Applicants

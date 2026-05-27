@@ -16,7 +16,7 @@ function UploadPage() {
         <div className="grid" style={{ gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: '40px' }}>
           <div>
             <div className="card">
-              <ResumeUpload onResult={setResult} />
+              <ResumeUpload jobId={jobId} onResult={setResult} />
             </div>
           </div>
           {result && (

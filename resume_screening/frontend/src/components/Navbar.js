@@ -12,7 +12,7 @@ function Navbar() {
   return (
     <header className="navbar">
       <div className="container nav-inner">
-        <Link to="/" className="brand-link">ARS System</Link>
+        <Link to="/" className="brand-link">Automated Resume Screening System</Link>
 
         <nav className="nav-links">
           {!user ? (

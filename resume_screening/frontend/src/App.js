@@ -15,7 +15,7 @@ function App() {
     <div>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Home />} />
         <Route path="/upload" element={<ProtectedRoute role="user"><UploadPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/jobs" element={<Jobs />} />

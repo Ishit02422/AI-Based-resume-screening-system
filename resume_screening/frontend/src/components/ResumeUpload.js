@@ -109,7 +109,7 @@ function ResumeUpload({ jobId }) {
           {isAnalysing && (
             <div className="mt-4 flex items-center gap-3">
               <div className="spinner small" />
-              <p className="muted small font-bold">Step 4: AI Extracting skills & experience...</p>
+              <p className="muted small font-bold">Step 4: System Extracting skills & experience...</p>
             </div>
           )}
 

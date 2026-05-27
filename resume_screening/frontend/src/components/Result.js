@@ -23,10 +23,10 @@ function Result({ data }) {
         
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-xl font-bold">AI Screening Results</h2>
-            <span className="badge bg-success" style={{ fontSize: '10px' }}>✓ AI VERIFIED</span>
+            <h2 className="text-xl font-bold">Evaluation Results</h2>
+            <span className="badge bg-success" style={{ fontSize: '10px' }}>✓ SYSTEM VERIFIED</span>
           </div>
-          <p className="muted mb-4 small">{data.summary || 'Comprehensive AI analysis based on job requirements and candidate profile.'}</p>
+          <p className="muted mb-4 small">{data.summary || 'Comprehensive profile analysis based on job requirements and candidate profile.'}</p>
           <div className="flex gap-6">
             <div>
               <p className="small font-bold mb-0">{matchedSkills.length}</p>
