@@ -6,6 +6,7 @@ const Resume = require("../models/Resume");
 const auth = require('../middleware/auth');
 
 const router = express.Router();
+const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:5000";
 
 // Multer storage
 const storage = multer.diskStorage({
@@ -53,7 +54,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
     let aiResponse;
     try {
       aiResponse = await axios.post(
-        "http://localhost:5000/analyze",
+        `${AI_SERVER_URL}/analyze`,
         { filePath: absolutePath, jobSkills: jobSkills },
         { timeout: 60000 }
       );
@@ -291,7 +292,7 @@ router.post('/:id/reprocess', auth, async (req, res) => {
 
     // call AI
     try {
-      const aiRes = await axios.post('http://localhost:5000/analyze', { filePath: resume.filePath }, { timeout: 20000 });
+      const aiRes = await axios.post(`${AI_SERVER_URL}/analyze`, { filePath: resume.filePath }, { timeout: 20000 });
       if (!aiRes || !aiRes.data) throw new Error('Empty AI response');
 
       // merge results
@@ -337,7 +338,7 @@ router.post('/reprocess-failed', auth, async (req, res) => {
         continue;
       }
       try {
-        const aiRes = await axios.post('http://localhost:5000/analyze', { filePath: r.filePath }, { timeout: 20000 });
+        const aiRes = await axios.post(`${AI_SERVER_URL}/analyze`, { filePath: r.filePath }, { timeout: 20000 });
         if (!aiRes || !aiRes.data) throw new Error('Empty AI response');
 
         r.skills = aiRes.data.skills || r.skills;
@@ -369,6 +370,3 @@ router.post('/reprocess-failed', auth, async (req, res) => {
 
 module.exports = router;
 
-module.exports = router;
-
-module.exports = router;

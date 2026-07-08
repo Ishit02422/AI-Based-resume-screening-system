@@ -26,7 +26,8 @@ app.get("/", (req, res) => {
 
 const fs = require('fs');
 
-mongoose.connect("mongodb://127.0.0.1:27017/resume_ai_db")
+const mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/resume_ai_db";
+mongoose.connect(mongoURI)
   .then(() => {
     console.log("MongoDB Connected");
     try { fs.writeFileSync('db_status.log', 'Connected ' + new Date().toISOString()); } catch (e) { }
