@@ -9,30 +9,67 @@ app = Flask(__name__)
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        data = request.get_json()
-        if not data or "filePath" not in data:
-            return jsonify({"error": "File path not provided"}), 400
-
-        path = data["filePath"]
-
-        # ✅ Debug log (VERY IMPORTANT)
-        print("FILE PATH RECEIVED:", path)
-
-        if not os.path.exists(path):
-            return jsonify({"error": "File not found"}), 400
-
         text = ""
+        job_skills = []
 
-        # ✅ PDF handling
-        if path.lower().endswith(".pdf"):
-            with pdfplumber.open(path) as pdf:
-                for page in pdf.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text += page_text + " "
+        # ✅ Check if file is uploaded as multipart form-data
+        if 'file' in request.files:
+            file = request.files['file']
+            filename = file.filename
+            
+            import io
+            file_bytes = file.read()
+            file_stream = io.BytesIO(file_bytes)
+            
+            print("AI RECEIVED UPLOADED FILE:", filename)
+
+            if filename.lower().endswith(".pdf"):
+                with pdfplumber.open(file_stream) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text + " "
+            elif filename.lower().endswith('.docx'):
+                try:
+                    from docx import Document
+                    doc = Document(file_stream)
+                    for p in doc.paragraphs:
+                        text += p.text + " "
+                except Exception as e:
+                    print('DOCX parse error:', e)
+                    return jsonify({"error": "Failed to parse .docx file"}), 400
+            elif filename.lower().endswith('.doc'):
+                return jsonify({"error": "Unsupported file type: .doc (use .pdf or .docx)"}), 400
+            else:
+                text = file_bytes.decode('utf-8', errors='ignore')
+
+            # Job skills might be passed as a form field
+            job_skills_raw = request.form.get('jobSkills')
+            if job_skills_raw:
+                import json
+                try:
+                    job_skills = json.loads(job_skills_raw)
+                except Exception:
+                    job_skills = []
         else:
-            # ✅ TXT fallback and .docx support
-            if path.lower().endswith('.docx'):
+            # ✅ Fallback to JSON payload with filePath (for local/backward compatibility)
+            data = request.get_json()
+            if not data or "filePath" not in data:
+                return jsonify({"error": "No file uploaded and no filePath provided"}), 400
+
+            path = data["filePath"]
+            print("FILE PATH RECEIVED:", path)
+
+            if not os.path.exists(path):
+                return jsonify({"error": f"File not found: {path}"}), 400
+
+            if path.lower().endswith(".pdf"):
+                with pdfplumber.open(path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text + " "
+            elif path.lower().endswith('.docx'):
                 try:
                     from docx import Document
                     doc = Document(path)
@@ -42,20 +79,18 @@ def analyze():
                     print('DOCX parse error:', e)
                     return jsonify({"error": "Failed to parse .docx file"}), 400
             elif path.lower().endswith('.doc'):
-                # .doc (binary) not supported in this simple demo
                 return jsonify({"error": "Unsupported file type: .doc (use .pdf or .docx)"}), 400
             else:
                 with open(path, "r", errors="ignore") as f:
                     text = f.read()
+
+            job_skills = data.get('jobSkills') if (isinstance(data, dict) and data.get('jobSkills') is not None) else []
 
         if not text.strip():
             return jsonify({"error": "Empty resume content"}), 400
 
         # ✅ Skill extraction
         resume_skills = extract_skills(text)
-
-        # Use job-specific list if provided, otherwise default to empty list (allows field-agnostic parsing)
-        job_skills = data.get('jobSkills') if (isinstance(data, dict) and data.get('jobSkills') is not None) else []
 
         score, matched, missing = match(resume_skills, job_skills)
 

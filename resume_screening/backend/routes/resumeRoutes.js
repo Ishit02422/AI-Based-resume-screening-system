@@ -7,6 +7,25 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:5000";
+const fs = require('fs');
+
+// Helper to call AI Server by uploading file as multipart/form-data
+async function callAiServer(filePath, jobSkills = []) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File not found: ${filePath}`);
+  }
+  const formData = new FormData();
+  const fileBuffer = fs.readFileSync(filePath);
+  const fileBlob = new Blob([fileBuffer]);
+  formData.append('file', fileBlob, path.basename(filePath));
+  formData.append('jobSkills', JSON.stringify(jobSkills));
+  return await axios.post(`${AI_SERVER_URL}/analyze`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    timeout: 60000
+  });
+}
 
 // Multer storage
 const storage = multer.diskStorage({
@@ -53,11 +72,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
 
     let aiResponse;
     try {
-      aiResponse = await axios.post(
-        `${AI_SERVER_URL}/analyze`,
-        { filePath: absolutePath, jobSkills: jobSkills },
-        { timeout: 60000 }
-      );
+      aiResponse = await callAiServer(absolutePath, jobSkills);
 
       if (!aiResponse || !aiResponse.data) {
         console.error('Empty AI response for file', absolutePath);
@@ -292,7 +307,7 @@ router.post('/:id/reprocess', auth, async (req, res) => {
 
     // call AI
     try {
-      const aiRes = await axios.post(`${AI_SERVER_URL}/analyze`, { filePath: resume.filePath }, { timeout: 20000 });
+      const aiRes = await callAiServer(resume.filePath, resume.jobSkills || []);
       if (!aiRes || !aiRes.data) throw new Error('Empty AI response');
 
       // merge results
@@ -338,7 +353,7 @@ router.post('/reprocess-failed', auth, async (req, res) => {
         continue;
       }
       try {
-        const aiRes = await axios.post(`${AI_SERVER_URL}/analyze`, { filePath: r.filePath }, { timeout: 20000 });
+        const aiRes = await callAiServer(r.filePath, r.jobSkills || []);
         if (!aiRes || !aiRes.data) throw new Error('Empty AI response');
 
         r.skills = aiRes.data.skills || r.skills;
