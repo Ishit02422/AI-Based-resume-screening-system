@@ -1,7 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
 
 function Home() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleCardClick = (type) => {
+    if (!user) {
+      navigate('/signup');
+      return;
+    }
+    const isRecruiter = user.role === 'recruiter' || user.role === 'admin';
+    if (type === 'scoring' || type === 'parsing') {
+      navigate(isRecruiter ? '/dashboard' : '/upload');
+    } else if (type === 'gap') {
+      navigate(isRecruiter ? '/history' : '/history');
+    }
+  };
+
   return (
     <div className="landing-page">
       {/* Hero Section */}
@@ -21,8 +38,6 @@ function Home() {
         </div>
       </section>
 
-
-
       {/* Features Section */}
       <section className="container py-24">
         <div className="text-center mb-16">
@@ -30,17 +45,17 @@ function Home() {
           <p className="muted">Everything you need to automate your hiring pipeline.</p>
         </div>
         <div className="grid grid-cols-3 gap-10">
-          <div className="feature-card">
+          <div className="feature-card" onClick={() => handleCardClick('scoring')}>
             <div className="icon-box">🎯</div>
             <h4>Precision Scoring</h4>
             <p className="muted">Our smart algorithm ranks candidates based on key data points including skills and experience.</p>
           </div>
-          <div className="feature-card">
+          <div className="feature-card" onClick={() => handleCardClick('gap')}>
             <div className="icon-box">📊</div>
             <h4>Skill Gap Analysis</h4>
             <p className="muted">Visualize exactly what a candidate brings to the table and what training they might need.</p>
           </div>
-          <div className="feature-card">
+          <div className="feature-card" onClick={() => handleCardClick('parsing')}>
             <div className="icon-box">⚡</div>
             <h4>Instant Parsing</h4>
             <p className="muted">Upload hundreds of resumes and get results in seconds. No more manual data entry.</p>

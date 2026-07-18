@@ -442,6 +442,7 @@ body {
   background: #111827;
   border: 1px solid var(--border);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .feature-card:hover {
