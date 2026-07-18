@@ -48,7 +48,11 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await axios.post('/api/auth/logout');
+    try {
+      await axios.post('/api/auth/logout');
+    } catch (err) {
+      console.error('Backend logout failed:', err);
+    }
     setUser(null);
     window.location.href = '/'; // Immediately redirect to home page
   };
