@@ -762,7 +762,155 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* ANALYTICS CHARTS */
+.charts-section {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.chart-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.pie-chart-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.pie-chart {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pie-chart-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: var(--card);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pie-chart-hole .pie-total {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.pie-chart-hole .pie-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-item .legend-count {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 20px;
+  text-align: right;
+}
+
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 70px;
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  min-width: fit-content;
+}
+
+.bar-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 24px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
   .grid-cols-3, .grid-cols-4 {
     grid-template-columns: 1fr !important;
   }
