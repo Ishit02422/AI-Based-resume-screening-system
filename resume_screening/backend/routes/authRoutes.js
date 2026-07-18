@@ -8,8 +8,8 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: 'lax',
-  // secure: true, // enable when running over HTTPS
+  sameSite: 'none', // Needed for cross-domain cookies in production
+  secure: true,      // Required when sameSite: 'none' (only works over HTTPS)
   maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
 };
 
