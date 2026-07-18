@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import Result from "./Result";
 import "../App.css";
 
-function ResumeUpload({ jobId }) {
+function ResumeUpload({ jobId, onResult }) {
   const [result, setResult] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -16,6 +16,7 @@ function ResumeUpload({ jobId }) {
     if (!file) return;
     setFileName(file.name);
     setResult(null);
+    if (onResult) onResult(null);
     const formData = new FormData();
     formData.append("resume", file);
     if (jobId) formData.append("jobId", jobId);
@@ -39,6 +40,7 @@ function ResumeUpload({ jobId }) {
         }
       );
       setResult(res.data.data);
+      if (onResult) onResult(res.data.data);
     } catch (err) {
       console.error('Upload error:', err);
       const msg = err?.response?.data?.error || err?.message || 'Upload failed';
@@ -117,7 +119,7 @@ function ResumeUpload({ jobId }) {
         </div>
       )}
 
-      {result && (
+      {!onResult && result && (
         <div className="mt-8">
           <Result data={result} />
         </div>
