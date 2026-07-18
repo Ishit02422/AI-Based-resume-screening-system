@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await axios.post('/api/auth/logout');
     setUser(null);
+    window.location.href = '/'; // Immediately redirect to home page
   };
 
   return (
