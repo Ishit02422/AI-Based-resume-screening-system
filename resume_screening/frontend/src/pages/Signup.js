@@ -13,7 +13,7 @@ function Signup() {
     e.preventDefault();
     try {
       await register(name, email, password, role);
-      window.location.href = '/dashboard';
+      window.location.href = '/login';
     } catch (err) {
       console.error('Signup error', err);
       const msg = err?.response?.data?.error || err?.message || 'Signup failed';

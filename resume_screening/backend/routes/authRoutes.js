@@ -32,9 +32,7 @@ router.post('/register', async (req, res) => {
     const user = new User({ name, email, passwordHash, role: userRole });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET);
-    res.cookie('token', token, COOKIE_OPTIONS);
-    res.json({ user: { _id: user._id, email: user.email, name: user.name, role: (user.email === 'hp@gmail.com' ? 'recruiter' : user.role) } });
+    res.json({ message: 'Registration successful! Please log in.' });
   } catch (err) {
     console.error('Register error:', err.message, err.stack);
     if (err.code === 11000) return res.status(400).json({ error: 'Email already registered' });

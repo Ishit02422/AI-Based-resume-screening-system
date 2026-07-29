@@ -39,12 +39,7 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password, role) => {
     const res = await axios.post('/api/auth/register', { name, email, password, role });
-    let userData = res.data.user;
-    if (userData && userData.email === 'hp@gmail.com') {
-      userData.role = 'recruiter';
-    }
-    setUser(userData);
-    return userData;
+    return res.data;
   };
 
   const logout = async () => {
