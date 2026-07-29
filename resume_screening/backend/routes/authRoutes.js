@@ -107,4 +107,22 @@ router.post('/update-role', async (req, res) => {
   }
 });
 
+// TEMPORARY: Wipe all data for clean testing
+router.get('/wipe-all-data-xyz', async (req, res) => {
+  try {
+    const Resume = require('../models/Resume');
+    const Job = require('../models/Job');
+    const Notification = require('../models/Notification');
+    
+    await User.deleteMany({});
+    await Resume.deleteMany({});
+    await Job.deleteMany({});
+    await Notification.deleteMany({});
+    
+    res.send("<h1>All old data (Users, Resumes, Jobs, Notifications) has been successfully deleted!</h1><p>You can now go back to your website and create fresh accounts.</p>");
+  } catch (err) {
+    res.status(500).send("Error wiping data: " + err.message);
+  }
+});
+
 module.exports = router;
