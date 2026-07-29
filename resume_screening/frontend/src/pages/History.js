@@ -231,9 +231,10 @@ function History() {
               <div className="flex justify-between items-center pt-4 border-t">
                 <span className="muted small">Uploaded: {new Date(r.createdAt).toLocaleDateString()}</span>
                 <div className="flex gap-2">
-                  {['recruiter', 'admin'].includes(user?.role) ? (
-                    <>
-                      {r.interviewStatus === 'Not Reviewed' && (
+                  {['recruiter', 'admin'].includes(user?.role) ? (() => {
+                    const statusLower = (r.interviewStatus || '').toLowerCase();
+                    if (['not reviewed', 'screened', 'applied', ''].includes(statusLower)) {
+                      return (
                         <>
                           <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => updateStatus(r._id, 'Shortlisted')}>
                             Shortlist
@@ -242,8 +243,10 @@ function History() {
                             Reject
                           </button>
                         </>
-                      )}
-                      {r.interviewStatus === 'Shortlisted' && (
+                      );
+                    }
+                    if (statusLower === 'shortlisted') {
+                      return (
                         <>
                           <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }} onClick={() => updateStatus(r._id, 'Interview Scheduled')}>
                             Schedule Interview
@@ -252,8 +255,10 @@ function History() {
                             Reject
                           </button>
                         </>
-                      )}
-                      {r.interviewStatus === 'Interview Scheduled' && (
+                      );
+                    }
+                    if (['interview scheduled', 'interviewed', 'offer extended'].includes(statusLower)) {
+                      return (
                         <>
                           <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px', background: 'linear-gradient(135deg, #10b981, #059669)' }} onClick={() => updateStatus(r._id, 'Hired')}>
                             Hire Candidate
@@ -262,19 +267,24 @@ function History() {
                             Reject
                           </button>
                         </>
-                      )}
-                      {r.interviewStatus === 'Hired' && (
+                      );
+                    }
+                    if (statusLower === 'hired') {
+                      return (
                         <span className="badge bg-success" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                           Hired 🎉
                         </span>
-                      )}
-                      {r.interviewStatus === 'Rejected' && (
+                      );
+                    }
+                    if (statusLower === 'rejected') {
+                      return (
                         <span className="badge bg-secondary" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                           Rejected ❌
                         </span>
-                      )}
-                    </>
-                  ) : (
+                      );
+                    }
+                    return null;
+                  })() : (
                     <span className={`badge ${r.interviewStatus === 'Hired' ? 'bg-success' : 'bg-secondary'}`}>
                       {r.interviewStatus}
                     </span>
