@@ -25,7 +25,7 @@ function Navbar() {
           ) : (
             <>
               <div className="flex items-center gap-3 mr-4">
-                <NotificationsMenu />
+                {!isRecruiter && <NotificationsMenu />}
                 <span className={`badge ${isRecruiter ? 'bg-primary' : 'bg-success'}`} style={{ fontSize: '10px' }}>
                   {isRecruiter ? 'RECRUITER' : 'CANDIDATE'}
                 </span>
