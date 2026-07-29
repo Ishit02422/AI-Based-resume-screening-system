@@ -3,6 +3,7 @@ const multer = require("multer");
 const axios = require("axios");
 const path = require("path");
 const Resume = require("../models/Resume");
+const Notification = require("../models/Notification");
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -285,6 +286,22 @@ router.post('/:id/status', auth, async (req, res) => {
     resume.interviewHistory.push({ status, note: note || '', by: req.user._id, at: new Date() });
 
     await resume.save();
+
+    // Create notification if a recruiter/admin updated the status
+    if (['recruiter', 'admin'].includes(req.user.role) && String(resume.user) !== String(req.user._id)) {
+      let type = 'info';
+      if (['Shortlisted', 'Interview Scheduled', 'Offer Extended', 'Hired'].includes(status)) type = 'success';
+      if (status === 'Rejected') type = 'error';
+      
+      const message = `Your resume has been marked as ${status}.`;
+      await Notification.create({
+        user: resume.user,
+        message,
+        type,
+        link: '/my-resumes'
+      });
+    }
+
     res.json({ data: resume });
   } catch (err) {
     console.error('Status update error:', err);

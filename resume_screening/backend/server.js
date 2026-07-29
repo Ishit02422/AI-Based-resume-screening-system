@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const resumeRoutes = require("./routes/resumeRoutes");
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes'); // Added jobRoutes require
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 // Allow CORS for dev frontend. Use origin:true to reflect request origin (enables cookies with credentials)
@@ -40,6 +41,7 @@ mongoose.connect(mongoURI)
 app.use("/api/auth", authRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve uploaded files
 

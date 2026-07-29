@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import AuthContext from '../context/AuthContext';
 import Logo from '../assets/logo.svg';
+import NotificationsMenu from './NotificationsMenu';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -24,6 +25,7 @@ function Navbar() {
           ) : (
             <>
               <div className="flex items-center gap-3 mr-4">
+                <NotificationsMenu />
                 <span className={`badge ${isRecruiter ? 'bg-primary' : 'bg-success'}`} style={{ fontSize: '10px' }}>
                   {isRecruiter ? 'RECRUITER' : 'CANDIDATE'}
                 </span>
