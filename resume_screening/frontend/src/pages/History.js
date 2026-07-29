@@ -186,9 +186,13 @@ function History() {
                     <div className="step-dot"></div>
                     <span className="step-label">System Screened</span>
                   </div>
-                  <div className={`pipeline-step ${['shortlisted', 'interview scheduled', 'hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
+                  <div className={`pipeline-step ${['shortlisted', 'interview scheduled', 'interviewed', 'offer extended', 'hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
                     <div className="step-dot"></div>
                     <span className="step-label">Shortlisted</span>
+                  </div>
+                  <div className={`pipeline-step ${['interview scheduled', 'interviewed', 'offer extended', 'hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
+                    <div className="step-dot"></div>
+                    <span className="step-label">Interview</span>
                   </div>
                   <div className={`pipeline-step ${['hired'].includes(r.interviewStatus?.toLowerCase()) ? 'active' : ''}`}>
                     <div className="step-dot"></div>
