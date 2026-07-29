@@ -5,6 +5,7 @@ const path = require("path");
 const Resume = require("../models/Resume");
 const Notification = require("../models/Notification");
 const auth = require('../middleware/auth');
+const FormData = require('form-data');
 
 const router = express.Router();
 const AI_SERVER_URL = process.env.AI_SERVER_URL || "https://ai-based-resume-screening-system-1.onrender.com";
@@ -16,14 +17,10 @@ async function callAiServer(filePath, jobSkills = []) {
     throw new Error(`File not found: ${filePath}`);
   }
   const formData = new FormData();
-  const fileBuffer = fs.readFileSync(filePath);
-  const fileBlob = new Blob([fileBuffer]);
-  formData.append('file', fileBlob, path.basename(filePath));
+  formData.append('file', fs.createReadStream(filePath));
   formData.append('jobSkills', JSON.stringify(jobSkills));
   return await axios.post(`${AI_SERVER_URL}/analyze`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
+    headers: formData.getHeaders(),
     timeout: 60000
   });
 }
