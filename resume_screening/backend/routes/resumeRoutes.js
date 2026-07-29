@@ -12,17 +12,29 @@ const AI_SERVER_URL = process.env.AI_SERVER_URL || "https://ai-based-resume-scre
 const fs = require('fs');
 
 // Helper to call AI Server by uploading file as multipart/form-data
-async function callAiServer(filePath, jobSkills = []) {
+async function callAiServer(filePath, jobSkills = [], retries = 3) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
   }
-  const formData = new FormData();
-  formData.append('file', fs.createReadStream(filePath));
-  formData.append('jobSkills', JSON.stringify(jobSkills));
-  return await axios.post(`${AI_SERVER_URL}/analyze`, formData, {
-    headers: formData.getHeaders(),
-    timeout: 60000
-  });
+  for (let i = 0; i < retries; i++) {
+    try {
+      const formData = new FormData();
+      formData.append('file', fs.createReadStream(filePath));
+      formData.append('jobSkills', JSON.stringify(jobSkills));
+      return await axios.post(`${AI_SERVER_URL}/analyze`, formData, {
+        headers: formData.getHeaders(),
+        timeout: 60000
+      });
+    } catch (err) {
+      const status = err.response?.status;
+      if ((status === 429 || status === 502 || status === 503) && i < retries - 1) {
+        console.log(`AI Server returned ${status}, retrying in 2.5s (attempt ${i + 1}/${retries})...`);
+        await new Promise(res => setTimeout(res, 2500));
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 // Multer storage
