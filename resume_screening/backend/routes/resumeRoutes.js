@@ -7,7 +7,7 @@ const Notification = require("../models/Notification");
 const auth = require('../middleware/auth');
 
 const router = express.Router();
-const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:5000";
+const AI_SERVER_URL = process.env.AI_SERVER_URL || "https://ai-based-resume-screening-system-1.onrender.com";
 const fs = require('fs');
 
 // Helper to call AI Server by uploading file as multipart/form-data

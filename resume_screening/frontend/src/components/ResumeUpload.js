@@ -40,6 +40,9 @@ function ResumeUpload({ jobId, onResult }) {
         }
       );
       setResult(res.data.data);
+      if (res.data.warning) {
+        setErrorMsg(res.data.warning);
+      }
       if (onResult) onResult(res.data.data);
     } catch (err) {
       console.error('Upload error:', err);
