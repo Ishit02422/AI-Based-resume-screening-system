@@ -32,7 +32,7 @@ function Home() {
             Transform your recruitment process with automated resume matching. Identify top talent in seconds, bridge skill gaps, and build your dream team with data-driven confidence.
           </p>
           <div className="flex justify-center gap-6">
-            <Link to="/signup" className="btn btn-primary btn-large">Get Started</Link>
+            <Link to={user ? (user.role === 'recruiter' || user.role === 'admin' ? '/dashboard' : '/upload') : '/signup'} className="btn btn-primary btn-large">Get Started</Link>
             <Link to="/jobs" className="btn btn-ghost btn-large">Browse Jobs</Link>
           </div>
         </div>
@@ -70,7 +70,7 @@ function Home() {
             <h2 className="mb-2">Ready to streamline your hiring?</h2>
             <p className="text-slate-400">Use our automated platform to find and match top talent.</p>
           </div>
-          <Link to="/signup" className="btn btn-primary btn-large">Get Started Now</Link>
+          <Link to={user ? (user.role === 'recruiter' || user.role === 'admin' ? '/dashboard' : '/upload') : '/signup'} className="btn btn-primary btn-large">Get Started Now</Link>
         </div>
       </section>
 
