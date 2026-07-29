@@ -21,6 +21,7 @@ function App() {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/create-job" element={<ProtectedRoute role="recruiter"><CreateJob /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+        <Route path="/my-resumes" element={<Navigate to="/history" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>

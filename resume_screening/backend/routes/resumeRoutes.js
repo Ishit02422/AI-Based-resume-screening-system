@@ -355,7 +355,7 @@ router.post('/:id/status', auth, async (req, res) => {
         user: resume.user,
         message,
         type,
-        link: '/my-resumes'
+        link: '/history'
       });
     }
 
