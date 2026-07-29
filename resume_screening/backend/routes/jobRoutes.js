@@ -42,39 +42,59 @@ router.post('/', auth, async (req, res) => {
 // Seed diverse jobs
 router.get('/seed', async (req, res) => {
     try {
+        const User = require('../models/User');
+        const bcrypt = require('bcrypt');
+        
+        let recruiter = await User.findOne({ role: 'recruiter' });
+        if (!recruiter) {
+            const passwordHash = await bcrypt.hash('123456', 10);
+            recruiter = new User({
+                name: 'Default HR Manager',
+                email: 'hr@gmail.com',
+                passwordHash: passwordHash,
+                role: 'recruiter'
+            });
+            await recruiter.save();
+        }
+
         await Job.deleteMany({});
         const defaultJobs = [
             {
                 title: 'Node.js Backend Developer',
                 description: 'Looking for an experienced backend developer skilled in Node.js, Express, REST APIs, and MongoDB database architecture.',
-                requiredSkills: ['node', 'express', 'mongodb', 'javascript', 'sql']
+                requiredSkills: ['node', 'express', 'mongodb', 'javascript', 'sql'],
+                createdBy: recruiter._id
             },
             {
                 title: 'React Frontend Engineer',
                 description: 'We need a creative frontend developer to build responsive and interactive web UIs using React, HTML5, CSS3, and JavaScript.',
-                requiredSkills: ['react', 'javascript', 'html', 'css', 'design']
+                requiredSkills: ['react', 'javascript', 'html', 'css', 'design'],
+                createdBy: recruiter._id
             },
             {
                 title: 'Python & Data Analyst',
                 description: 'Join our data team to build data pipelines, analyze business metrics, and write Python scripts for data processing.',
-                requiredSkills: ['python', 'sql', 'excel', 'data analysis', 'problem solving']
+                requiredSkills: ['python', 'sql', 'excel', 'data analysis', 'problem solving'],
+                createdBy: recruiter._id
             },
             {
                 title: 'Human Resources (HR) Coordinator',
                 description: 'Responsible for end-to-end candidate sourcing, screening, scheduling interviews, and employee onboarding.',
-                requiredSkills: ['hr', 'recruitment', 'communication', 'sourcing', 'management']
+                requiredSkills: ['hr', 'recruitment', 'communication', 'sourcing', 'management'],
+                createdBy: recruiter._id
             },
             {
                 title: 'Senior Accountant & Auditor',
                 description: 'Manage company financial records, tax filings, GST reconciliation, and auditing using Tally and Advanced Excel.',
-                requiredSkills: ['accounting', 'tally', 'gst', 'excel', 'finance']
+                requiredSkills: ['accounting', 'tally', 'gst', 'excel', 'finance'],
+                createdBy: recruiter._id
             }
         ];
         const created = await Job.insertMany(defaultJobs);
         res.json({ message: 'Successfully seeded 5 diverse jobs!', data: created });
     } catch (err) {
         console.error('Job seed error:', err);
-        res.status(500).json({ error: 'Failed to seed jobs' });
+        res.status(500).json({ error: 'Failed to seed jobs: ' + err.message });
     }
 });
 
