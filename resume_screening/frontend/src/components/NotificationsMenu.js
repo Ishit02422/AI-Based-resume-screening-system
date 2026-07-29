@@ -85,7 +85,7 @@ function NotificationsMenu() {
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden'
         }}>
           <div style={{ padding: '10px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4 style={{ margin: 0 }}>Notifications</h4>
+            <h4 style={{ margin: 0, color: '#333' }}>Notifications</h4>
             {unreadCount > 0 && (
               <button onClick={markAllAsRead} style={{ fontSize: '12px', background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer' }}>
                 Mark all as read
@@ -111,7 +111,7 @@ function NotificationsMenu() {
                     cursor: 'pointer',
                     display: 'block',
                     textDecoration: 'none',
-                    color: 'inherit'
+                    color: '#333'
                   }}
                 >
                   {notif.link ? (
