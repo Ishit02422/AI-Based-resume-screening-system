@@ -6,21 +6,26 @@ import os
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok", "service": "resume-ai-ml"}), 200
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
         text = ""
         job_skills = []
 
-        # ✅ Check if file is uploaded as multipart form-data
+        # 1. Multipart form-data file upload (primary method)
         if 'file' in request.files:
             file = request.files['file']
-            filename = file.filename
-            
+            filename = file.filename or "resume.pdf"
+
             import io
             file_bytes = file.read()
             file_stream = io.BytesIO(file_bytes)
-            
+
             print("AI RECEIVED UPLOADED FILE:", filename)
 
             if filename.lower().endswith(".pdf"):
@@ -43,7 +48,7 @@ def analyze():
             else:
                 text = file_bytes.decode('utf-8', errors='ignore')
 
-            # Job skills might be passed as a form field
+            # Job skills passed as form field
             job_skills_raw = request.form.get('jobSkills')
             if job_skills_raw:
                 import json
@@ -52,8 +57,8 @@ def analyze():
                 except Exception:
                     job_skills = []
         else:
-            # ✅ Fallback to JSON payload with filePath (for local/backward compatibility)
-            data = request.get_json()
+            # 2. JSON payload with filePath fallback
+            data = request.get_json(silent=True)
             if not data or "filePath" not in data:
                 return jsonify({"error": "No file uploaded and no filePath provided"}), 400
 
@@ -89,13 +94,12 @@ def analyze():
         if not text.strip():
             return jsonify({"error": "Empty resume content"}), 400
 
-        # ✅ Skill extraction
+        # Skill extraction & matching
         resume_skills = extract_skills(text)
-
         score, matched, missing = match(resume_skills, job_skills)
 
         # Debugging
-        print("RESUME SKILLS:", resume_skills)
+        print(f"RESUME SKILLS ({len(resume_skills)}):", resume_skills)
         print("MATCHED:", matched, "MISSING:", missing, "SCORE:", score)
 
         return jsonify({

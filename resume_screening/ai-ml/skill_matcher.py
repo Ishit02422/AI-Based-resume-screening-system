@@ -1,33 +1,49 @@
 from difflib import SequenceMatcher
+import re
 
 
 def _normalize(skill):
-    # simple normalization: lowercase and strip non-alphanumeric
-    return ''.join(c for c in skill.lower() if c.isalnum())
+    """Normalize skill string for resilient comparison."""
+    s = skill.lower().strip()
+    # Normalize common abbreviations / suffixes
+    s = re.sub(r'[\s\-_\./]+', '', s)
+    s = re.sub(r'js$', '', s)  # reactjs -> react, nodejs -> node
+    return s
 
 
-def match(resume_skills, job_skills, threshold=0.8):
+def match(resume_skills, job_skills, threshold=0.75):
     """Return (score, matched_list, missing_list).
-    Uses case-insensitive + simple fuzzy matching to handle variants.
+    Uses robust normalization + substring inclusion + fuzzy matching.
     """
     if not job_skills:
-        # If no target skills, return 100% match for the resume's own profile
-        return 100, resume_skills, []
+        # If no target skills provided, return 100% match for the candidate's profile
+        return 100, list(resume_skills), []
 
-    norm_resume = [(_normalize(s), s) for s in resume_skills]
-    norm_job = [(_normalize(s), s) for s in job_skills]
-
+    norm_resume = [(_normalize(s), s) for s in resume_skills if s]
     matched = []
     missing = []
 
-    for norm_j, orig_j in norm_job:
+    for orig_j in job_skills:
+        if not orig_j or not str(orig_j).strip():
+            continue
+        norm_j = _normalize(str(orig_j))
         found = None
-        # exact first
+
+        # 1. Exact match on normalized form
         for nr, orig_r in norm_resume:
             if nr == norm_j:
                 found = orig_r
                 break
-        # fuzzy match fallback
+
+        # 2. Substring match for compound skills (e.g. "React" in "React.js", "Node" in "Node.js", "MERN" in "MERN Stack")
+        if not found:
+            for nr, orig_r in norm_resume:
+                if len(nr) >= 3 and len(norm_j) >= 3:
+                    if nr in norm_j or norm_j in nr:
+                        found = orig_r
+                        break
+
+        # 3. Fuzzy matching fallback
         if not found:
             best_ratio = 0
             best_orig = None
@@ -45,5 +61,6 @@ def match(resume_skills, job_skills, threshold=0.8):
         else:
             missing.append(orig_j)
 
-    score = (len(matched) / len(job_skills)) * 100
+    total_job_skills = len([j for j in job_skills if j and str(j).strip()])
+    score = round((len(matched) / total_job_skills) * 100) if total_job_skills > 0 else 100
     return score, matched, missing

@@ -2,66 +2,174 @@ const express = require("express");
 const multer = require("multer");
 const axios = require("axios");
 const path = require("path");
+const fs = require('fs');
 const Resume = require("../models/Resume");
 const Notification = require("../models/Notification");
 const auth = require('../middleware/auth');
 const FormData = require('form-data');
 
-const router = express.Router();
-const AI_SERVER_URL = process.env.AI_SERVER_URL || "https://ai-based-resume-screening-system-1.onrender.com";
-const fs = require('fs');
+let PDFParse = null;
+try {
+  const pdfModule = require('pdf-parse');
+  PDFParse = pdfModule.PDFParse || pdfModule;
+} catch (e) {
+  console.warn('pdf-parse module load warning:', e.message);
+}
 
-const SKILLS_LIST = [
-  "python", "react", "sql", "mongodb", "java", "node", "javascript", "html", "css", "aws", "docker", "kubernetes",
-  "leadership", "management", "marketing", "sales", "human resources", "hr", "operations", "strategy", "communication",
-  "accounting", "tally", "gst", "finance", "banking", "taxation", "auditing", "excel", "data analysis",
-  "nursing", "surgery", "patient care", "diagnostics", "pharmacology", "anatomy", "medical records",
-  "problem solving", "teamwork", "negotiation", "presentation", "writing", "design", "planning"
+const router = express.Router();
+const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://127.0.0.1:5000";
+const AI_SERVER_FALLBACK_URL = "https://ai-based-resume-screening-system-1.onrender.com";
+
+const FALLBACK_SKILL_PATTERNS = [
+  // Full Stack & Web
+  ['MERN Stack', [/\bmern\s*stack\b/i, /\bmern\b/i]],
+  ['MEAN Stack', [/\bmean\s*stack\b/i, /\bmean\b/i]],
+  ['React.js', [/\breact(?:\.js|js)?\b/i]],
+  ['Node.js', [/\bnode(?:\.js|js)?\b/i]],
+  ['Express.js', [/\bexpress(?:\.js|js)?\b/i]],
+  ['MongoDB', [/\bmongodb\b/i, /\bmongo\b/i]],
+  ['JavaScript', [/\bjavascript\b/i, /\bjs\b/i]],
+  ['TypeScript', [/\btypescript\b/i, /\bts\b/i]],
+  ['HTML', [/\bhtml5?\b/i]],
+  ['CSS', [/\bcss3?\b/i]],
+  ['Bootstrap', [/\bbootstrap\b/i]],
+  ['Tailwind CSS', [/\btailwind(?:\s*css)?\b/i]],
+  ['Next.js', [/\bnext(?:\.js|js)?\b/i]],
+  ['Vue.js', [/\bvue(?:\.js|js)?\b/i]],
+  ['Angular', [/\bangular(?:\.js|js)?\b/i]],
+  ['Redux', [/\bredux\b/i]],
+  ['REST API', [/\brest(?:ful)?\s*(?:api|apis)?\b/i]],
+  ['GraphQL', [/\bgraphql\b/i]],
+  ['jQuery', [/\bjquery\b/i]],
+
+  // Languages
+  ['Python', [/\bpython\b/i]],
+  ['Java', [/\bjava\b(?!script)/i]],
+  ['C++', [/(?:\bc\+\+|\bcpp\b)/i]],
+  ['C#', [/(?:\bc#|\bcsharp\b)/i]],
+  ['PHP', [/\bphp\b/i]],
+  ['Ruby', [/\bruby\b/i]],
+  ['Go', [/\bgolang\b/i, /\bgo\s+language\b/i]],
+  ['Rust', [/\brust\b/i]],
+  ['Kotlin', [/\bkotlin\b/i]],
+  ['Swift', [/\bswift\b/i]],
+  ['Flutter', [/\bflutter\b/i]],
+
+  // Databases & DevOps
+  ['SQL', [/\bsql\b/i]],
+  ['MySQL', [/\bmysql\b/i]],
+  ['PostgreSQL', [/\b(?:postgresql|postgres)\b/i]],
+  ['Redis', [/\bredis\b/i]],
+  ['Firebase', [/\bfirebase\b/i]],
+  ['AWS', [/\baws\b/i, /\bamazon\s*web\s*services\b/i]],
+  ['Azure', [/\bazure\b/i]],
+  ['Docker', [/\bdocker\b/i]],
+  ['Kubernetes', [/\bkubernetes\b/i, /\bk8s\b/i]],
+  ['Git', [/\bgit\b/i, /\bgithub\b/i]],
+  ['CI/CD', [/\bci\s*\/\s*cd\b/i, /\bcicd\b/i]],
+  ['Linux', [/\blinux\b/i]],
+
+  // AI & Data
+  ['Artificial Intelligence', [/\bartificial\s*intelligence\b/i, /\bai\b(?:\s+(?:engineer|developer|model|tool))/i]],
+  ['Machine Learning', [/\bmachine\s*learning\b/i, /\bml\b(?:\s+(?:engineer|model))/i]],
+  ['Deep Learning', [/\bdeep\s*learning\b/i]],
+  ['Data Analysis', [/\bdata\s*analysis\b/i, /\bdata\s*analytics\b/i]],
+  ['Power BI', [/\bpower\s*bi\b/i]],
+  ['Tableau', [/\btableau\b/i]],
+
+  // Management & Business
+  ['Project Management', [/\bproject\s*management\b/i]],
+  ['Agile / Scrum', [/\bagile\b/i, /\bscrum\b/i]],
+  ['Leadership', [/\bleadership\b/i]],
+  ['Communication', [/\bcommunication\b/i]],
+  ['Problem Solving', [/\bproblem\s*solving\b/i]],
+  ['Teamwork', [/\bteamwork\b/i]],
+  ['Human Resources (HR)', [/\bhuman\s*resources\b/i, /\bhr\s+(?:manager|executive|operations|policies|management)\b/i]],
+  ['GST', [/\bgst\b(?:\s+(?:filing|returns|compliance|tax))/i, /\bgoods\s+and\s+services\s+tax\b/i]],
+  ['Tally', [/\btally\b(?:\s*erp)?/i]],
+  ['Accounting', [/\baccounting\b/i, /\baccountant\b/i]],
+  ['Excel', [/\b(?:ms\s*)?excel\b/i]]
 ];
 
-function fallbackExtractSkills(filePath) {
+async function fallbackExtractSkills(filePath) {
   try {
     let text = "";
     if (fs.existsSync(filePath)) {
-      text = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' }).toLowerCase();
+      const ext = path.extname(filePath).toLowerCase();
+      if (ext === '.pdf' && PDFParse) {
+        try {
+          const buffer = fs.readFileSync(filePath);
+          const parser = new PDFParse({ data: buffer });
+          const res = await parser.getText();
+          text = res && res.text ? res.text : "";
+        } catch (pdfErr) {
+          console.error("PDF parse fallback error:", pdfErr.message);
+        }
+      } else if (ext === '.txt') {
+        text = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' });
+      }
     }
-    let found = SKILLS_LIST.filter(s => text.includes(s));
+
+    const found = [];
+    for (const [canonicalName, patterns] of FALLBACK_SKILL_PATTERNS) {
+      if (patterns.some(p => p.test(text))) {
+        found.push(canonicalName);
+      }
+    }
+
     if (found.length === 0) {
-      found = ["Communication", "Problem Solving", "Teamwork", "Management"];
+      found.push("Communication", "Problem Solving", "Teamwork");
     }
-    return found;
+    return [...new Set(found)];
   } catch (e) {
+    console.error("fallbackExtractSkills general error:", e);
     return ["Communication", "Problem Solving", "Teamwork"];
   }
 }
 
-// Helper to call AI Server by uploading file as multipart/form-data
-async function callAiServer(filePath, jobSkills = [], retries = 3) {
+// Helper to post file to AI Server with primary & fallback URL support
+async function sendToAi(targetUrl, filePath, jobSkills) {
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(filePath));
+  formData.append('jobSkills', JSON.stringify(jobSkills));
+  return await axios.post(`${targetUrl}/analyze`, formData, {
+    headers: {
+      ...formData.getHeaders(),
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    timeout: 15000
+  });
+}
+
+async function callAiServer(filePath, jobSkills = [], retries = 2) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
   }
+
+  // 1. Try Primary AI Server (e.g. Local 127.0.0.1:5000 or custom AI_SERVER_URL)
   for (let i = 0; i < retries; i++) {
     try {
-      const formData = new FormData();
-      formData.append('file', fs.createReadStream(filePath));
-      formData.append('jobSkills', JSON.stringify(jobSkills));
-      return await axios.post(`${AI_SERVER_URL}/analyze`, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        },
-        timeout: 30000
-      });
+      console.log(`Calling primary AI server (${AI_SERVER_URL}) attempt ${i + 1}...`);
+      return await sendToAi(AI_SERVER_URL, filePath, jobSkills);
     } catch (err) {
-      const status = err.response?.status;
-      if ((status === 429 || status === 502 || status === 503) && i < retries - 1) {
-        console.log(`AI Server returned ${status}, retrying in 2.5s (attempt ${i + 1}/${retries})...`);
-        await new Promise(res => setTimeout(res, 2500));
-      } else {
-        throw err;
+      console.warn(`Primary AI server attempt ${i + 1} error:`, err.message);
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, 1000));
       }
     }
   }
+
+  // 2. Try Fallback Render URL if primary was different and failed
+  if (AI_SERVER_URL !== AI_SERVER_FALLBACK_URL) {
+    try {
+      console.log(`Calling backup Render AI server (${AI_SERVER_FALLBACK_URL})...`);
+      return await sendToAi(AI_SERVER_FALLBACK_URL, filePath, jobSkills);
+    } catch (err) {
+      console.warn("Backup Render AI server also failed:", err.message);
+    }
+  }
+
+  throw new Error("All AI server endpoints are currently unavailable.");
 }
 
 // Multer storage
@@ -79,15 +187,11 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
     console.log('Upload attempt by user:', req.user && req.user._id, 'file:', req.file && req.file.originalname);
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    // ✅ Absolute path (IMPORTANT)
     const absolutePath = path.resolve(req.file.path);
-
-    // basic file extension whitelist
     const allowedExt = ['.pdf', '.txt', '.docx', '.doc'];
     const ext = path.extname(absolutePath).toLowerCase();
     if (!allowedExt.includes(ext)) return res.status(400).json({ error: 'Unsupported file type' });
 
-    // ✅ Get Job ID from body
     const { jobId } = req.body;
     let jobSkills = [];
     if (jobId) {
@@ -102,21 +206,13 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       }
     }
 
-    // If no job is linked, we force a generic skill to bypass the old AI server's hardcoded IT defaults
-    if (!jobSkills.length) {
-      jobSkills = ["Professional Expertise"]; 
-    }
-
-    let aiResponse;
     try {
-      aiResponse = await callAiServer(absolutePath, jobSkills);
+      const aiResponse = await callAiServer(absolutePath, jobSkills);
 
       if (!aiResponse || !aiResponse.data) {
-        console.error('Empty AI response for file', absolutePath);
         throw new Error('Empty AI response');
       }
 
-      // ensure we persist file info and new fields returned by AI
       let payload = {
         ...aiResponse.data,
         user: req.user._id,
@@ -124,13 +220,12 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
         filePath: absolutePath,
         aiError: undefined,
         aiTries: 1,
-        jobId: jobId || undefined, // Link to job
+        jobId: jobId || undefined,
         status: 'Screened'
       };
 
-      // ✅ UNIVERSAL MODE HACK: If no job is linked and AI found skills but gave 0 score, 
-      // we treat it as a profile extraction (100% match for its own field)
-      if (!jobId && payload.score === 0 && payload.skills && payload.skills.length > 0) {
+      // Profile extraction mode if no specific job selected
+      if (!jobId && payload.skills && payload.skills.length > 0) {
         payload.score = 100;
         payload.matchedSkills = payload.skills;
         payload.missingSkills = [];
@@ -138,7 +233,6 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       }
 
       const resume = new Resume(payload);
-
       if (resume.score >= 70) {
         resume.interviewStatus = "Interview Scheduled";
         resume.status = "Interview Scheduled";
@@ -148,25 +242,24 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
       return res.json({ data: resume });
 
     } catch (err) {
-      console.error('AI server unreachable or failed, executing Node.js fallback extractor:', err.message);
+      console.error('AI server unavailable, executing robust Node.js fallback extractor:', err.message);
 
-      const extractedSkills = fallbackExtractSkills(absolutePath);
+      const extractedSkills = await fallbackExtractSkills(absolutePath);
       let matched = [];
       let missing = [];
       let score = 85;
 
-      if (jobSkills && jobSkills.length > 0 && jobSkills[0] !== "Professional Expertise") {
-        matched = jobSkills.filter(js => extractedSkills.some(es => es.toLowerCase().includes(js.toLowerCase())));
+      if (jobSkills && jobSkills.length > 0) {
+        matched = jobSkills.filter(js =>
+          extractedSkills.some(es => es.toLowerCase().replace(/[\s\.\-_]/g, '').includes(js.toLowerCase().replace(/[\s\.\-_]/g, '')) ||
+                                    js.toLowerCase().replace(/[\s\.\-_]/g, '').includes(es.toLowerCase().replace(/[\s\.\-_]/g, '')))
+        );
         missing = jobSkills.filter(js => !matched.includes(js));
-        score = jobSkills.length > 0 ? Math.round((matched.length / jobSkills.length) * 100) : 85;
-        if (score === 0) {
-          matched = extractedSkills.slice(0, 2);
-          score = 65;
-        }
+        score = Math.round((matched.length / jobSkills.length) * 100);
       } else {
         matched = extractedSkills;
         missing = [];
-        score = 85;
+        score = 100;
       }
 
       const fallback = new Resume({
@@ -176,6 +269,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
         skills: extractedSkills,
         matchedSkills: matched,
         missingSkills: missing,
+        jobSkills: jobSkills.length ? jobSkills : extractedSkills,
         score: score,
         aiError: undefined,
         aiTries: 1,
@@ -194,7 +288,7 @@ router.post("/upload", auth, upload.single("resume"), async (req, res) => {
   }
 });
 
-// Get current user's resumes (supports pagination, filters: minScore, from, to, q)
+// Get current user's resumes
 router.get('/my', auth, async (req, res) => {
   try {
     const { page = 1, limit = 20, minScore, from, to, q, jobId } = req.query;
@@ -203,7 +297,6 @@ router.get('/my', auth, async (req, res) => {
 
     const filter = {};
 
-    // Permission check: recruiters see all (or filtered by job), users see only theirs
     if (['recruiter', 'admin'].includes(req.user.role)) {
       if (jobId) filter.jobId = jobId;
     } else {
@@ -326,11 +419,9 @@ router.post('/:id/status', auth, async (req, res) => {
     const resume = await Resume.findById(id);
     if (!resume) return res.status(404).json({ error: 'Resume not found' });
 
-    // permission: owner or recruiter/admin
     const canEdit = (String(resume.user) === String(req.user._id)) || ['recruiter', 'admin'].includes(req.user.role);
     if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
-    // apply updates
     resume.interviewStatus = status;
     if (interviewDate) {
       const d = new Date(interviewDate);
@@ -338,13 +429,11 @@ router.post('/:id/status', auth, async (req, res) => {
     }
     if (note) resume.interviewNotes = note;
 
-    // push history entry
     resume.interviewHistory = resume.interviewHistory || [];
     resume.interviewHistory.push({ status, note: note || '', by: req.user._id, at: new Date() });
 
     await resume.save();
 
-    // Create notification if a recruiter/admin updated the status
     if (['recruiter', 'admin'].includes(req.user.role) && String(resume.user) !== String(req.user._id)) {
       let type = 'info';
       if (['Shortlisted', 'Interview Scheduled', 'Offer Extended', 'Hired'].includes(status)) type = 'success';
@@ -373,18 +462,15 @@ router.post('/:id/reprocess', auth, async (req, res) => {
     const resume = await Resume.findById(id);
     if (!resume) return res.status(404).json({ error: 'Resume not found' });
 
-    // permission: owner or recruiter/admin
     const canEdit = (String(resume.user) === String(req.user._id)) || ['recruiter', 'admin'].includes(req.user.role);
     if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
     if (!resume.filePath) return res.status(400).json({ error: 'No file path to reprocess' });
 
-    // call AI
     try {
       const aiRes = await callAiServer(resume.filePath, resume.jobSkills || []);
       if (!aiRes || !aiRes.data) throw new Error('Empty AI response');
 
-      // merge results
       resume.skills = aiRes.data.skills || resume.skills;
       resume.matchedSkills = aiRes.data.matchedSkills || resume.matchedSkills;
       resume.jobSkills = aiRes.data.jobSkills || resume.jobSkills;
@@ -398,7 +484,7 @@ router.post('/:id/reprocess', auth, async (req, res) => {
       await resume.save();
       return res.json({ data: resume });
     } catch (err) {
-      console.error('Reprocess AI failed:', err.message, err.response && err.response.data);
+      console.error('Reprocess AI failed:', err.message);
       resume.aiError = err.response?.data?.error || err.message || 'AI processing failed';
       resume.aiTries = (resume.aiTries || 0) + 1;
       await resume.save();
@@ -458,4 +544,3 @@ router.post('/reprocess-failed', auth, async (req, res) => {
 });
 
 module.exports = router;
-
